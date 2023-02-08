@@ -5,11 +5,13 @@ import os
 from urllib.parse import urlparse
 import logging
 import json
+from slack import SlackNotification
 
 parser = argparse.ArgumentParser(
         prog = 'json-diff',
         description = 'Save differences of an URL-fetched json file')
 parser.add_argument('url', help='URL to fetch')
+parser.add_argument('slack_url', help='Slack URL for notifications')
 
 args = parser.parse_args()
 
@@ -59,10 +61,12 @@ with open(full_path, 'r') as file:
 
 if old != new:
     logger.info('DIFFERENCES FOUND!')
+    diffs = {'removed': [], 'added': []}
 
     for target in old['targets']:
         if target not in new['targets']:
             logger.info(f'REMOVED: {target}')
+            diffs['removed'].append(target['type'] + '://' + target['host'] + target['path'])
     for random in old['randoms']:
         if random not in new['randoms']:
             logger.info(f'REMOVED: {random}')
@@ -70,6 +74,7 @@ if old != new:
     for target in new['targets']:
         if target not in old['targets']:
             logger.info(f'ADDED: {target}')
+            diffs['added'].append(target['type'] + '://' + target['host'] + target['path'])
     for random in new['randoms']:
         if random not in old['randoms']:
             logger.info(f'ADDED: {random}')
@@ -81,3 +86,8 @@ if old != new:
         file.write(json.dumps(new))
     
     logger.info('DIFFERENCES SAVED!')
+
+    if SlackNotification.send_notification(args.slack_url, diffs, args.url):
+        logger.info('SLACK NOTIFICATION SENT!')
+    else:
+        logger.error('SLACK NOTIFICATION FAIL!')
