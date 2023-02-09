@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MUTEX="/tmp/json-diff-mutex"
+MUTEX="/tmp/json-diff-mutex-$3"
 
 if test -f $MUTEX;
 then
