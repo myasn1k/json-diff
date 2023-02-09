@@ -15,50 +15,45 @@ class SlackNotification():
 
     def send_notification(url, diffs, target_url):
         domain = urlparse(target_url).netloc
-        added = list(dict.fromkeys(diffs['added']))
-        removed = list(dict.fromkeys(diffs['removed']))
-        ok = True
-        for a, r in zip_longest(added, removed):
-            body = {
-                "attachments": [
-                    {
-                        "color": "#03a1fc",
-                        "blocks": [
-                            {
-                                "type": "header",
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": f"Differences detected in {domain}"
-                                }
-                            },
-                            {
-                                "type": "section",
-                                "fields": [
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": f"*Added:*\n{a}"
-                                    },
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": f"*Removed:*\n{r}"
-                                    }
-                                ]
-                            },
-                            {
-                                "type": "section",
-                                "fields": [
-                                    {
-                                        "type": "mrkdwn",
-                                        "text": f"<{target_url}|View JSON Page>"
-                                    }
-                                ]
+        added = '\n'.join(diffs['added'])
+        removed = '\n'.join(diffs['removed'])
+        body = {
+            "attachments": [
+                {
+                    "color": "#03a1fc",
+                    "blocks": [
+                        {
+                            "type": "header",
+                            "text": {
+                                "type": "plain_text",
+                                "text": f"Differences detected in {domain}"
                             }
-                        ]
-                    }
-                ]
-            }
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"*Added:*\n{added}"
+                                },
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"*Removed:*\n{removed}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"<{target_url}|View JSON Page>"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
 
-            if not SlackNotification._post_webhook(body, url):
-                ok = False
-        
-        return ok
+        return SlackNotification._post_webhook(body, url)

@@ -61,12 +61,12 @@ with open(full_path, 'r') as file:
 
 if old != new:
     logger.info('DIFFERENCES FOUND!')
-    diffs = {'removed': [], 'added': []}
+    diffs = {'removed': set(), 'added': set()}
 
     for target in old['targets']:
         if target not in new['targets']:
             logger.info(f'REMOVED: {target}')
-            diffs['removed'].append(target['type'] + '://' + target['host'] + target['path'])
+            diffs['removed'].add(target['host'])
     for random in old['randoms']:
         if random not in new['randoms']:
             logger.info(f'REMOVED: {random}')
@@ -74,7 +74,7 @@ if old != new:
     for target in new['targets']:
         if target not in old['targets']:
             logger.info(f'ADDED: {target}')
-            diffs['added'].append(target['type'] + '://' + target['host'] + target['path'])
+            diffs['added'].add(target['host'])
     for random in new['randoms']:
         if random not in old['randoms']:
             logger.info(f'ADDED: {random}')
