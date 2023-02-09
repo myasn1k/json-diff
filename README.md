@@ -11,4 +11,4 @@ Save differences of an URL-fetched json file
 ## To run
 
 1. Install requirements 
-2. Append to your contab: `*/10 * * * * cd /PATH/TO/json-diff && /usr/bin/python3 json-diff.py FULL_URL_TO_SCAN SLACK_MESSAGE_HOOK_URL`
+2. Append to your contab: `*/10 * * * * cd /PATH/TO/json-diff && ./run.sh FULL_URL_TO_SCAN SLACK_MESSAGE_HOOK_URL MUTEX_NUMBER`
