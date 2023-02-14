@@ -97,6 +97,10 @@ if old != new:
     diffs['added'] -= to_delete
     logger.info('PRUNING FINISHED')
 
+    if not len(diffs['removed']) and not len(diffs['added']):
+        logger.info('No added or removed entries remaining, quitting')
+        quit()
+
     if SlackNotification.send_notification(args.slack_url, diffs, args.url):
         logger.info('SLACK NOTIFICATION SENT!')
     else:
