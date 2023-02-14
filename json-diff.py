@@ -87,6 +87,16 @@ if old != new:
     
     logger.info('DIFFERENCES SAVED!')
 
+    logger.info('PRUNING MODIFIED ENTRIES (not useful for slack notifications)')
+    to_delete = set()
+    for r in diffs['removed']:
+        if r in diffs['added']:
+            logger.info(f'{r} modified, not notifying')
+            to_delete.add(r)
+    diffs['removed'] -= to_delete
+    diffs['added'] -= to_delete
+    logger.info('PRUNING FINISHED')
+
     if SlackNotification.send_notification(args.slack_url, diffs, args.url):
         logger.info('SLACK NOTIFICATION SENT!')
     else:
