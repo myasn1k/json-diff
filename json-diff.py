@@ -66,7 +66,7 @@ if old != new:
     for target in old['targets']:
         if target not in new['targets']:
             logger.info(f'REMOVED: {target}')
-            diffs['removed'].add(target['host'])
+            diffs['removed'].add('https://' + target['host'] if target['use_ssl'] else 'http://' + target['host'])
     for random in old['randoms']:
         if random not in new['randoms']:
             logger.info(f'REMOVED: {random}')
@@ -74,7 +74,7 @@ if old != new:
     for target in new['targets']:
         if target not in old['targets']:
             logger.info(f'ADDED: {target}')
-            diffs['added'].add(target['host'])
+            diffs['added'].add('https://' + target['host'] if target['use_ssl'] else 'http://' + target['host'])
     for random in new['randoms']:
         if random not in old['randoms']:
             logger.info(f'ADDED: {random}')
