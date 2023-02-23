@@ -23,4 +23,4 @@ services:
     environment:
       - USER=user@email.com
       - "PASS=pas$word"
-      - CONNECT=Russia
+      - CONNECT=Thailand
