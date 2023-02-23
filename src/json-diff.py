@@ -1,23 +1,16 @@
 import requests
-import argparse
 from datetime import datetime
 import os
 from urllib.parse import urlparse
+import time
 import logging
 import json
 from slack import SlackNotification
 
-parser = argparse.ArgumentParser(
-        prog = 'json-diff',
-        description = 'Save differences of an URL-fetched json file')
-parser.add_argument('url', help='URL to fetch')
-parser.add_argument('slack_url', help='Slack URL for notifications')
+time.sleep(30)
 
-args = parser.parse_args()
-
-domain = urlparse(args.url).netloc
-path = os.path.realpath(__file__)
-scan_path = path[:-3] + '_' + domain
+domain = urlparse(os.getenv('RW_MONITOR')).netloc
+scan_path = os.getenv('RW_DB_PATH') + domain
 full_path = scan_path + '/' + domain + '.json'
 log_path = scan_path + '/' + 'log.txt'
 
@@ -30,12 +23,21 @@ ch.setFormatter(formatter)
 logger.addHandler(ch)
 
 try:
+    r = requests.get('http://ifconfig.me/ip', timeout = 60)
+    if r.status_code >= 400:
+        logger.warning('The web service for public IP fetch is down')
+    else:
+        logger.info(f'Public IP address: {r.text}')
+except:
+    logger.warning('The web service for public IP fetch is down')
+
+try:
     os.mkdir(scan_path)
     fh = logging.FileHandler(log_path)
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
-    init = requests.get(args.url, timeout=30).json()
+    init = requests.get(os.getenv('RW_MONITOR'), timeout=30).json()
     with open(full_path, 'w') as out:
         out.write(json.dumps(init))
     logger.info('Process initialized')
@@ -49,7 +51,7 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 try:
-    new = requests.get(args.url, timeout=30).json()
+    new = requests.get(os.getenv('RW_MONITOR'), timeout=30).json()
 except:
     logger.error('JSON retrieving failed')
     tb = traceback.format_exc()
@@ -79,7 +81,7 @@ if old != new:
         if random not in old['randoms']:
             logger.info(f'ADDED: {random}')
 
-    with open(scan_path + '/' + "diff_" + datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '.json', 'w') as file:
+    with open(scan_path + '/' + 'diff_' + datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + '.json', 'w') as file:
         file.write(json.dumps({'old': old, 'new': new}))
 
     with open(full_path, 'w') as file:
@@ -101,7 +103,7 @@ if old != new:
         logger.info('No added or removed entries remaining, quitting')
         quit()
 
-    if SlackNotification.send_notification(args.slack_url, diffs, args.url):
+    if SlackNotification.send_notification(os.getenv('RW_SLACK'), diffs, os.getenv('RW_MONITOR')):
         logger.info('SLACK NOTIFICATION SENT!')
     else:
         logger.error('SLACK NOTIFICATION FAIL!')
