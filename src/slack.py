@@ -78,10 +78,10 @@ class SlackNotification():
                         },
                         {
                             "type": "section",
-                            "text": [
+                            "fields": [
                                 {
                                     "type": "mrkdwn",
-                                    "text": f"*An error occurred:* {trace}"
+                                    "text": f"*An error occurred:*\n```{trace}```"
                                 }
                             ]
                         },

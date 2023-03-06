@@ -1,4 +1,5 @@
 import requests
+import traceback
 from datetime import datetime
 import os
 from urllib.parse import urlparse
@@ -55,8 +56,8 @@ try:
 except:
     logger.error('JSON retrieving failed')
     tb = traceback.format_exc()
-    logger.error(tb.strip())
     SlackNotification.send_error_notification(os.getenv('RW_SLACK'), tb.strip(), os.getenv('RW_MONITOR'))
+    logger.error(tb.strip())
     quit()
 
 with open(full_path, 'r') as file:
