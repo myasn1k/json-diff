@@ -58,11 +58,8 @@ class SlackNotification():
 
         return SlackNotification._post_webhook(body, url)
 
-    def send_error_notification(url, tb, target_url):
+    def send_error_notification(url, target_url):
         domain = urlparse(target_url).netloc
-        trace = tb
-        if len(trace) > 1000:
-            trace = trace[:1000] + "..."
 
         body = {
             "attachments": [
@@ -73,17 +70,8 @@ class SlackNotification():
                             "type": "header",
                             "text": {
                                 "type": "plain_text",
-                                "text": f"Error for {domain}"
+                                "text": f"{domain} down"
                             }
-                        },
-                        {
-                            "type": "section",
-                            "fields": [
-                                {
-                                    "type": "mrkdwn",
-                                    "text": f"*An error occurred:*\n```{trace}```"
-                                }
-                            ]
                         },
                         {
                             "type": "section",
