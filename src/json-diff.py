@@ -56,6 +56,7 @@ except:
     logger.error('JSON retrieving failed')
     tb = traceback.format_exc()
     logger.error(tb.strip())
+    SlackNotification.send_error_notification(os.getenv('RW_SLACK'), tb.strip(), os.getenv('RW_MONITOR'))
     quit()
 
 with open(full_path, 'r') as file:
