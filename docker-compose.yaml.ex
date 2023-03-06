@@ -21,6 +21,5 @@ services:
       - NET_ADMIN
       - NET_RAW
     environment:
-      - USER=user@email.com
-      - "PASS=pas$word"
+      - TOKEN=XXXX
       - CONNECT=Thailand
