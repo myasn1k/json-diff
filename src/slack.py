@@ -74,7 +74,7 @@ class SlackNotification():
                             "text": {
                                 "type": "plain_text",
                                 "text": f"Error for {domain}"
-                            
+                            }
                         },
                         {
                             "type": "section",
