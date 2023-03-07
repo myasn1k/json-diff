@@ -14,6 +14,7 @@ domain = urlparse(os.getenv('RW_MONITOR')).netloc
 scan_path = os.getenv('RW_DB_PATH') + domain
 full_path = scan_path + '/' + domain + '.json'
 log_path = scan_path + '/' + 'log.txt'
+down_path = scan_path + '/.down'
 
 logger = logging.getLogger('json-diff')
 logger.setLevel(logging.DEBUG)
@@ -53,11 +54,16 @@ logger.addHandler(fh)
 
 try:
     new = requests.get(os.getenv('RW_MONITOR'), timeout=30).json()
+    if os.path.isfile(down_path):
+        os.remove(down_path)
+        SlackNotification.send_up_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'))
 except:
     logger.error('JSON retrieving failed')
     tb = traceback.format_exc()
     logger.error(tb.strip())
-    SlackNotification.send_error_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'))
+    if not os.path.isfile(down_path):
+        SlackNotification.send_down_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'))
+        open(down_path, 'a').close()
     quit()
 
 with open(full_path, 'r') as file:

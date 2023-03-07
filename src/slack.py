@@ -58,7 +58,7 @@ class SlackNotification():
 
         return SlackNotification._post_webhook(body, url)
 
-    def send_error_notification(url, target_url):
+    def send_down_notification(url, target_url):
         domain = urlparse(target_url).netloc
 
         body = {
@@ -70,7 +70,38 @@ class SlackNotification():
                             "type": "header",
                             "text": {
                                 "type": "plain_text",
-                                "text": f"{domain} down"
+                                "text": f"{domain} DOWN"
+                            }
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"<{target_url}|View JSON Page>"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+
+        return SlackNotification._post_webhook(body, url)
+    
+    def send_up_notification(url, target_url):
+        domain = urlparse(target_url).netloc
+
+        body = {
+            "attachments": [
+                {
+                    "color": "#32cd32",
+                    "blocks": [
+                        {
+                            "type": "header",
+                            "text": {
+                                "type": "plain_text",
+                                "text": f"{domain} UP"
                             }
                         },
                         {
