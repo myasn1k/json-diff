@@ -7,10 +7,38 @@ import time
 import logging
 import json
 from slack import SlackNotification
+import random
 
-time.sleep(30)
+def get_targets():
+    s = requests.Session()
+    s.headers = {}
+    pid = ':' + str(random.randint(3000, 10000))
+    login = s.post(login_url, timeout=30, json='{"location":{"timezone":"E","find_ip":"'+my_ip+'","ip":"'+my_ip+'","country":"Thailand","region":"Bangkok","city":"Bangkok","OS":"windows","ARCH":"amd64"}}',
+            headers={'User-Agent': 'Go-http-client/1.1',
+                'Client-Hash': os.getenv('RW_CHASH') + pid,
+                'Content-Type': 'application/json',
+                'User-Hash': os.getenv('RW_UHASH'),
+                'Accept-Encoding': 'gzip'
+                })
+    ts = int(login.text.strip())
+    new = s.get(targets_url, timeout=30,
+            headers={'User-Agent': 'Go-http-client/1.1',
+                'Client-Hash': os.getenv('RW_CHASH') + pid,
+                'Content-Type': 'application/json',
+                'User-Hash': os.getenv('RW_UHASH'),
+                'Accept-Encoding': 'gzip',
+                'Time': str(ts+15)
+                })
+    if len(new.text) < 20 and 'Unauthorized' in new.text:
+        SlackNotification.send_error_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'), 'The server response was Unauthorized')
+        quit()
+    return new.json()['data']
+
+time.sleep(60)
 
 domain = urlparse(os.getenv('RW_MONITOR')).netloc
+login_url = os.getenv('RW_MONITOR') + '/login'
+targets_url = os.getenv('RW_MONITOR') + '/client/get_targets'
 scan_path = os.getenv('RW_DB_PATH') + domain
 full_path = scan_path + '/' + domain + '.json'
 log_path = scan_path + '/' + 'log.txt'
@@ -28,8 +56,10 @@ try:
     r = requests.get('http://ifconfig.me/ip', timeout = 60)
     if r.status_code >= 400:
         logger.warning('The web service for public IP fetch is down')
+        quit()
     else:
         logger.info(f'Public IP address: {r.text}')
+        my_ip = r.text.strip()
 except:
     logger.warning('The web service for public IP fetch is down')
 
@@ -39,7 +69,7 @@ try:
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
-    init = requests.get(os.getenv('RW_MONITOR'), timeout=30).json()
+    init = get_targets()
     with open(full_path, 'w') as out:
         out.write(json.dumps(init))
     logger.info('Process initialized')
@@ -53,7 +83,7 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 try:
-    new = requests.get(os.getenv('RW_MONITOR'), timeout=30).json()
+    new = get_targets()
     if os.path.isfile(down_path):
         os.remove(down_path)
         SlackNotification.send_up_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'))

@@ -14,6 +14,8 @@ services:
       RW_DB_PATH: /db/
       RW_SLACK: www.example.com
       RW_MONITOR: www.example.com
+      RW_CHASH: XXXXX
+      RW_UHASH: XXXXX
 
   vpn:
     image: ghcr.io/bubuntux/nordvpn

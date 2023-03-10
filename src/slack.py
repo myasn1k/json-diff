@@ -119,3 +119,43 @@ class SlackNotification():
         }
 
         return SlackNotification._post_webhook(body, url)
+
+    def send_error_notification(url, target_url, error):
+        domain = urlparse(target_url).netloc
+
+        body = {
+            "attachments": [
+                {
+                    "color": "#fc0303",
+                    "blocks": [
+                        {
+                            "type": "header",
+                            "text": {
+                                "type": "plain_text",
+                                "text": f"{domain} ERROR"
+                            }
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"*Error:*\n{error}"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"<{target_url}|View JSON Page>"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+
+        return SlackNotification._post_webhook(body, url)
