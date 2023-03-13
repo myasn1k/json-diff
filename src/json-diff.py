@@ -9,19 +9,22 @@ import json
 from slack import SlackNotification
 import random
 
-def get_targets():
+def get_targets(ip, log_url, tar_url):
     s = requests.Session()
     s.headers = {}
-    pid = ':' + str(random.randint(3000, 10000))
-    login = s.post(login_url, timeout=30, json='{"location":{"timezone":"E","find_ip":"'+my_ip+'","ip":"'+my_ip+'","country":"Thailand","region":"Bangkok","city":"Bangkok","OS":"windows","ARCH":"amd64"}}',
+    pid = ':' + str(random.randint(2000, 3000))
+    login = s.post(log_url, timeout=30, json='{"location":{"timezone":"CET","find_ip":"' + ip + '","ip":"' + ip + '","country":"Moldova","region":"Unknown","city":"Unknown","OS":"windows","ARCH":"amd64"}}',
             headers={'User-Agent': 'Go-http-client/1.1',
                 'Client-Hash': os.getenv('RW_CHASH') + pid,
                 'Content-Type': 'application/json',
                 'User-Hash': os.getenv('RW_UHASH'),
                 'Accept-Encoding': 'gzip'
                 })
+    if 'Unauthorized' in login.text:
+        SlackNotification.send_error_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'), 'The server response was Unauthorized during login phase')
+        quit()
     ts = int(login.text.strip())
-    new = s.get(targets_url, timeout=30,
+    new = s.get(tar_url, timeout=30,
             headers={'User-Agent': 'Go-http-client/1.1',
                 'Client-Hash': os.getenv('RW_CHASH') + pid,
                 'Content-Type': 'application/json',
@@ -30,7 +33,7 @@ def get_targets():
                 'Time': str(ts+15)
                 })
     if len(new.text) < 20 and 'Unauthorized' in new.text:
-        SlackNotification.send_error_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'), 'The server response was Unauthorized')
+        SlackNotification.send_error_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'), 'The server response was Unauthorized during targets retrieving phase')
         quit()
     return new.json()['data']
 
@@ -69,7 +72,7 @@ try:
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(formatter)
     logger.addHandler(fh)
-    init = get_targets()
+    init = get_targets(my_ip, login_url, targets_url)
     with open(full_path, 'w') as out:
         out.write(json.dumps(init))
     logger.info('Process initialized')
@@ -83,7 +86,7 @@ fh.setFormatter(formatter)
 logger.addHandler(fh)
 
 try:
-    new = get_targets()
+    new = get_targets(my_ip, login_url, targets_url)
     if os.path.isfile(down_path):
         os.remove(down_path)
         SlackNotification.send_up_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'))
