@@ -8,6 +8,8 @@ import logging
 import json
 from slack import SlackNotification
 import random
+from ctis import CTIS
+from datetime import date
 
 def get_targets(ip, log_url, tar_url):
     s = requests.Session()
@@ -15,33 +17,33 @@ def get_targets(ip, log_url, tar_url):
     pid = ':' + str(random.randint(2000, 3000))
     login = s.post(log_url, timeout=30, json='{"location":{"timezone":"CET","find_ip":"' + ip + '","ip":"' + ip + '","country":"Moldova","region":"Unknown","city":"Unknown","OS":"windows","ARCH":"amd64"}}',
             headers={'User-Agent': 'Go-http-client/1.1',
-                'Client-Hash': os.getenv('RW_CHASH') + pid,
+                'Client-Hash': os.getenv('CHASH') + pid,
                 'Content-Type': 'application/json',
-                'User-Hash': os.getenv('RW_UHASH'),
+                'User-Hash': os.getenv('UHASH'),
                 'Accept-Encoding': 'gzip'
                 })
     if 'Unauthorized' in login.text:
-        SlackNotification.send_error_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'), 'The server response was Unauthorized during login phase')
+        SlackNotification.send_error_notification(os.getenv('SLACK'), os.getenv('MONITOR'), 'The server response was Unauthorized during login phase')
         quit()
     ts = int(login.text.strip())
     new = s.get(tar_url, timeout=30,
             headers={'User-Agent': 'Go-http-client/1.1',
-                'Client-Hash': os.getenv('RW_CHASH') + pid,
+                'Client-Hash': os.getenv('CHASH') + pid,
                 'Content-Type': 'application/json',
-                'User-Hash': os.getenv('RW_UHASH'),
+                'User-Hash': os.getenv('UHASH'),
                 'Accept-Encoding': 'gzip',
                 'Time': str(ts+15)
                 })
     if len(new.text) < 20 and 'Unauthorized' in new.text:
-        SlackNotification.send_error_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'), 'The server response was Unauthorized during targets retrieving phase')
+        SlackNotification.send_error_notification(os.getenv('SLACK'), os.getenv('MONITOR'), 'The server response was Unauthorized during targets retrieving phase')
         quit()
     return new.json()['data']
 
 time.sleep(60)
 
-domain = urlparse(os.getenv('RW_MONITOR')).netloc
-login_url = os.getenv('RW_MONITOR') + '/login'
-targets_url = os.getenv('RW_MONITOR') + '/client/get_targets'
+domain = urlparse(os.getenv('MONITOR')).netloc
+login_url = os.getenv('MONITOR') + '/login'
+targets_url = os.getenv('MONITOR') + '/client/get_targets'
 scan_path = os.getenv('RW_DB_PATH') + domain
 full_path = scan_path + '/' + domain + '.json'
 log_path = scan_path + '/' + 'log.txt'
@@ -89,13 +91,13 @@ try:
     new = get_targets(my_ip, login_url, targets_url)
     if os.path.isfile(down_path):
         os.remove(down_path)
-        SlackNotification.send_up_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'))
+        SlackNotification.send_up_notification(os.getenv('SLACK'), os.getenv('MONITOR'))
 except:
     logger.error('JSON retrieving failed')
     tb = traceback.format_exc()
     logger.error(tb.strip())
     if not os.path.isfile(down_path):
-        SlackNotification.send_down_notification(os.getenv('RW_SLACK'), os.getenv('RW_MONITOR'))
+        SlackNotification.send_down_notification(os.getenv('SLACK'), os.getenv('MONITOR'))
         open(down_path, 'a').close()
     quit()
 
@@ -144,7 +146,27 @@ if old != new:
         logger.info('No added or removed entries remaining, quitting')
         quit()
 
-    if SlackNotification.send_notification(os.getenv('RW_SLACK'), diffs, os.getenv('RW_MONITOR')):
+    if SlackNotification.send_notification(os.getenv('SLACK'), diffs, os.getenv('MONITOR')):
         logger.info('SLACK NOTIFICATION SENT!')
     else:
         logger.error('SLACK NOTIFICATION FAIL!')
+
+    ctis_instance = CTIS(os.getenv('CTIS_URL'), os.getenv('CTIS_USER'), os.getenv('CTIS_PASS'))
+    ok, intrusion_set = ctis_instance.add_intrusion_set(os.getenv('ACTOR_NAME'))
+    if not ok:
+        raise Exception("Can't create intrusion set")
+    ok, operation = ctis_instance.add_operation(date.today().strftime('%Y%m%d') + ' ' + os.getenv('OPERATION_NAME'),
+            os.getenv('OPERATION_DESCRIPTION'))
+    if not ok:
+        raise Exception("Can't create operation")
+    ok, rel = ctis_instance.add_relationship('attributed-to', operation, 'x-operations', intrusion_set, 'intrusion-sets')
+    if not ok:
+        raise Exception("Can't create operation - intrusion-set relationship")
+    for url in diffs['added']:
+        ok, url_id = ctis_instance.add_url(url)
+        if not ok:
+            raise Exception(f"Can't create url {url}")
+        ok, rel = ctis_instance.add_relationship('related-to', operation, 'x-operations', url_id, 'urls')
+        if not ok:
+            raise Exception(f"Can't create operation - {url} relationship")
+    logger.info('CTIS ENTITIES CREATED!')

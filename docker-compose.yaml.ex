@@ -12,10 +12,16 @@ services:
     environment:
       PYTHONUNBUFFERED: 1
       RW_DB_PATH: /db/
-      RW_SLACK: www.example.com
-      RW_MONITOR: www.example.com
-      RW_CHASH: XXXXX
-      RW_UHASH: XXXXX
+      SLACK: www.example.com
+      MONITOR: www.example.com
+      CHASH: XXXXX
+      UHASH: XXXXX
+      CTIS_URL: www.example.com
+      CTIS_USER: user
+      CTIS_PASS: pass
+      ACTOR_NAME: actor
+      OPERATION_NAME: operation
+      OPERATION_DESCRIPTION: description
 
   vpn:
     image: ghcr.io/bubuntux/nordvpn
