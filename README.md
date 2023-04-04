@@ -12,8 +12,7 @@ Save differences of an URL-fetched json file
 
 ## To run
 
-1. Install requirements 
-2. Copy `docker-compose.yaml.ex` to `docker-compose.yaml` and edit it
+1. Copy `docker-compose.yaml.ex` to `docker-compose.yaml` and edit it
 	- Set `SLACK` for slack incoming webhook url
 	- Set `MONITOR` as the url to be monitored
 	- Set `TOKEN` for nordvpn authentication
@@ -26,8 +25,8 @@ Save differences of an URL-fetched json file
 	- Set `ACTOR_NAME` as the CTIS intrusion-set entity to be used
 	- Set `OPERATION_NAME` as the CTIS operation entity to be used
 	- Set `OPERATION_DESCRIPTION` as the CTIS operation entity description to be used
-3. Build docker compose: `docker-compose build app`
-4. Append to your contab: `*/10 * * * * cd /PATH/TO/json-diff && ./run.sh MUTEX_NUMBER`
+2. Build docker compose: `docker-compose build app`
+3. Append to your contab: `*/10 * * * * cd /PATH/TO/json-diff && ./run.sh MUTEX_NUMBER`
 
 ## Note
 
