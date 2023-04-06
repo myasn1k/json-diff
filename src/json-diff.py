@@ -7,6 +7,7 @@ import time
 import logging
 import json
 from slack import SlackNotification
+from telegram import TelegramNotification
 import random
 from ctis import CTIS
 from datetime import date
@@ -150,6 +151,11 @@ if old != new:
         logger.info('SLACK NOTIFICATION SENT!')
     else:
         logger.error('SLACK NOTIFICATION FAIL!')
+
+    if TelegramNotification.send_notification(os.getenv('TG_TOKEN'), os.getenv('TG_CHAT'), diffs, os.getenv('MONITOR')):
+        logger.info('TELEGRAM NOTIFICATION SENT!')
+    else:
+        logger.error('TELEGRAM NOTIFICATION FAIL!')
 
     ctis_instance = CTIS(os.getenv('CTIS_URL'), os.getenv('CTIS_USER'), os.getenv('CTIS_PASS'))
     ok, intrusion_set = ctis_instance.add_intrusion_set(os.getenv('ACTOR_NAME'))

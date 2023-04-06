@@ -9,6 +9,7 @@ Save differences of an URL-fetched json file
 - Slack integration
 - NordVPN integration
 - CTIS integration
+- Telegram integration
 
 ## To run
 
@@ -25,6 +26,8 @@ Save differences of an URL-fetched json file
 	- Set `ACTOR_NAME` as the CTIS intrusion-set entity to be used
 	- Set `OPERATION_NAME` as the CTIS operation entity to be used
 	- Set `OPERATION_DESCRIPTION` as the CTIS operation entity description to be used
+	- Set `TG_CHAT` as the Telegram group's chat id to be used
+	- Set `TG_TOKEN` as the Telegram bot's token to be used
 2. Build docker compose: `docker-compose build app`
 3. Append to your contab: `*/10 * * * * cd /PATH/TO/json-diff && ./run.sh MUTEX_NUMBER`
 

@@ -22,6 +22,8 @@ services:
       ACTOR_NAME: actor
       OPERATION_NAME: operation
       OPERATION_DESCRIPTION: description
+      TG_CHAT: XXXXX
+      TG_TOKEN: XXXXX
 
   vpn:
     image: ghcr.io/bubuntux/nordvpn
