@@ -30,4 +30,7 @@ slack_to_ctis:
     url: PLACEHOLDER
     username: PLACEHOLDER
     password: PLACEHOLDER
+    actor_name: PLACEHOLDER
+    operation_name: PLACEHOLDER
+    operation_description: PLACEHOLDER
   time_path: PLACEHOLDER
