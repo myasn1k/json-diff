@@ -13,23 +13,12 @@ Save differences of an URL-fetched json file
 
 ## To run
 
-1. Copy `docker-compose.yaml.ex` to `docker-compose.yaml` and edit it
-	- Set `SLACK` for slack incoming webhook url
-	- Set `MONITOR` as the url to be monitored
+1. Edit `docker-compose.yaml`
 	- Set `TOKEN` for nordvpn authentication
 	- Set `CONNECT` as the location of the nordvpn server
-	- Set `CHASH` as the client hash (without the pid)
-	- Set `UHASH` as th user hash (remember to escape dollar signs using dollar signs)
-	- Set `CTIS_URL` as the CTIS url
-	- Set `CTIS_USER` as the CTIS username
-	- Set `CTIS_PASS` as the CTIS password
-	- Set `ACTOR_NAME` as the CTIS intrusion-set entity to be used
-	- Set `OPERATION_NAME` as the CTIS operation entity to be used
-	- Set `OPERATION_DESCRIPTION` as the CTIS operation entity description to be used
-	- Set `TG_CHAT` as the Telegram group's chat id to be used
-	- Set `TG_TOKEN` as the Telegram bot's token to be used
-2. Build docker compose: `docker-compose build app`
-3. Append to your contab: `*/10 * * * * cd /PATH/TO/json-diff && ./run.sh MUTEX_NUMBER`
+2. Copy `config_vol/config.sample.yaml` to `config_vol/config.yaml` and edit it
+3. Build docker compose: `docker-compose build app`
+4. Append to your contab: `*/10 * * * * cd /PATH/TO/json-diff && ./run.sh MUTEX_NUMBER`
 
 ## Note
 

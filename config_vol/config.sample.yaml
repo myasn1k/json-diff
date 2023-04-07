@@ -1,0 +1,33 @@
+---
+notifications:
+  slack:
+    enabled: True
+    url: https://hooks.slack.com/services/something/goes/here
+  ctis:
+    enabled: True
+    url: https://example.com
+    username: user
+    password: pass
+    actor_name: actor
+    operation_name: operation
+    operation_description: description
+  telegram:
+    enabled: True
+    token: XXXXX
+    chat_id: XXXXX
+
+target_info:
+  url: https://example.com
+  CHASH: XXXXX
+  UHASH: XXXXX
+
+slack_to_ctis:
+  slack_error_url: PLACEHOLDER
+  slack:
+    token: PLACEHOLDER
+    channel_id: PLACEHOLDER
+  ctis:
+    url: PLACEHOLDER
+    username: PLACEHOLDER
+    password: PLACEHOLDER
+  time_path: PLACEHOLDER
