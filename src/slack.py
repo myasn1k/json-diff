@@ -159,3 +159,32 @@ class SlackNotification():
         }
 
         return SlackNotification._post_webhook(body, url)
+
+    def send_slack2ctis_error_notification(url, message, error):
+        body = {
+            "attachments": [
+                {
+                    "color": "#fc0303",
+                    "blocks": [
+                        {
+                            "type": "header",
+                            "text": {
+                                "type": "plain_text",
+                                "text": f"{message}"
+                            }
+                        },
+                        {
+                            "type": "section",
+                            "fields": [
+                                {
+                                    "type": "mrkdwn",
+                                    "text": f"*Error:*\n{error}"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+
+        return SlackNotification._post_webhook(body, url)

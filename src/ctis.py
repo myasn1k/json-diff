@@ -125,3 +125,22 @@ class CTIS():
             ok, rel = self.add_relationship('related-to', operation, 'x-operations', url_id, 'urls')
             if not ok:
                 raise Exception(f"Can't create operation - {url} relationship")
+
+    def upload_slack2ctis(self, added, actor_name, op_name, op_desc):
+        ok, intrusion_set = self.add_intrusion_set(actor_name)
+        if not ok:
+            raise Exception("Can't create intrusion set")
+        ok, operation = self.add_operation(date.today().strftime('%Y%m%d') + ' ' + op_name, op_desc)
+        if not ok:
+            raise Exception("Can't create operation")
+        ok, rel = self.add_relationship('attributed-to', operation, 'x-operations', intrusion_set, 'intrusion-sets')
+        if not ok:
+            raise Exception("Can't create operation - intrusion-set relationship")
+        for url in added:
+            url = url.strip(">").strip("<")
+            ok, url_id = self.add_url(url)
+            if not ok:
+                raise Exception(f"Can't create url {url}")
+            ok, rel = self.add_relationship('related-to', operation, 'x-operations', url_id, 'urls')
+            if not ok:
+                raise Exception(f"Can't create operation - {url} relationship")
