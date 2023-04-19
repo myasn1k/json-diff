@@ -1,5 +1,6 @@
 import requests
 from datetime import date
+from datetime import datetime
 
 class CTIS():
 
@@ -52,6 +53,7 @@ class CTIS():
             {
                 "confidence": 100,
                 "description": description,
+                "first_seen": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%SZ"),
                 "labels": ["ddos"],
                 "name": name,
                 "x-sources": [
