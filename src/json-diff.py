@@ -11,12 +11,35 @@ import random
 from ctis import CTIS
 from config import Config
 import requests
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+import base64
+import il
+import ctypes
+
+key_gen = il.def_asm(
+    name = "key_gen",
+    prototype=ctypes.CFUNCTYPE(ctypes.c_int64, ctypes.c_int64),
+    code = """
+    .intel_syntax noprefix
+    mov rax, 0xCCCCCCCCCCCCCCCD
+    mov rcx, rdi
+    imul rcx
+    lea rax, [rdx+rcx]
+    sar rax, 2
+    ret
+    """)
 
 def get_targets(ip, log_url, tar_url):
     s = requests.Session()
     s.headers = {}
     pid = ':' + str(random.randint(2000, 3000))
-    login = s.post(log_url, timeout=30, json='{"location":{"timezone":"CET","find_ip":"' + ip + '","ip":"' + ip + '","country":"Moldova","region":"Unknown","city":"Unknown","OS":"windows","ARCH":"amd64"}}',
+    plaintext = '{"timezone":"CET","find_ip":"' + ip + '","ip":"' + ip + '","country":"Moldova","region":"Unknown","city":"Unknown","OS":"windows","ARCH":"amd64"}'
+    plaintext = plaintext.encode()
+    nonce = get_random_bytes(12)
+    cipher = AES.new(Config['target_info']['UHASH'][-32:].encode(), AES.MODE_GCM, nonce=nonce)
+    ciphertext, tag = cipher.encrypt_and_digest(plaintext)
+    login = s.post(log_url, timeout=30, json='{"location":"' + base64.b64encode(nonce + ciphertext + tag).decode() + '"}',
             headers={'User-Agent': 'Go-http-client/1.1',
                 'Client-Hash': Config['target_info']['CHASH'] + pid,
                 'Content-Type': 'application/json',
@@ -40,7 +63,12 @@ def get_targets(ip, log_url, tar_url):
         SlackNotification.send_error_notification(Config['notifications']['slack']['url'],
                 Config['target_info']['url'], 'The server response was Unauthorized during targets retrieving phase')
         quit()
-    return new.json()['data']
+    key = Config['target_info']['UHASH'][-14:].strip() + str(key_gen(new.json()['token'])).strip()
+    tmp = base64.b64decode(new.json()['data'])
+    nonce = tmp[:12]
+    tag = tmp[-16:]
+    cipher = AES.new(key.encode(), AES.MODE_GCM, nonce=nonce)
+    return json.loads(cipher.decrypt_and_verify(tmp[12:-16], tag).decode())
 
 def if_up_get_targets(ip, logurl, tarurl, downpath):
     try:
@@ -64,7 +92,7 @@ def if_up_get_targets(ip, logurl, tarurl, downpath):
 
 def get_diffs(new, old, scanpath, fullpath):
     diffs = {'removed': set(), 'added': set()}
-    
+
     for target in old['targets']:
         if target not in new['targets']:
             logger.info(f'REMOVED: {target}')
@@ -125,7 +153,7 @@ time.sleep(60)
 
 # Init global variables
 domain = urlparse(Config['target_info']['url']).netloc
-login_url = Config['target_info']['url'] + '/login'
+login_url = Config['target_info']['url'] + '/client/login'
 targets_url = Config['target_info']['url'] + '/client/get_targets'
 scan_path = os.getenv('RW_DB_PATH') + domain
 full_path = scan_path + '/' + domain + '.json'

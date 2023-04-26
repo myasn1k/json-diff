@@ -3,3 +3,4 @@ db_vol/
 config.yaml
 docker-compose.yaml
 .time
+*.il

@@ -1,3 +1,5 @@
 requests
 pyTelegramBotAPI
 PyYAML
+pycryptodome
+il
