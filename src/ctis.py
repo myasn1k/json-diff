@@ -52,7 +52,7 @@ class CTIS():
         json_query = [
             {
                 "confidence": 100,
-                "description": description,
+                "description": description.replace('\n', '\r\n'),
                 "first_seen": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%SZ"),
                 "labels": ["ddos"],
                 "name": name,
