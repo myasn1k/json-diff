@@ -54,7 +54,7 @@ class CTIS():
                 "confidence": 100,
                 "description": description.replace('\n', '\r\n'),
                 "first_seen": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%SZ"),
-                "labels": ["ddos"],
+                "labels": ["Type:ddos"],
                 "name": name,
                 "x-sources": [
                     {
