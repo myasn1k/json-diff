@@ -10,6 +10,7 @@ Save differences of an URL-fetched json file
 - NordVPN integration
 - CTIS integration
 - Telegram integration
+- Airtable integration
 
 ## To run
 

@@ -3,3 +3,4 @@ pyTelegramBotAPI
 PyYAML
 pycryptodome
 il
+airtable

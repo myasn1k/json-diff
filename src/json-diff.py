@@ -16,6 +16,7 @@ from Crypto.Random import get_random_bytes
 import base64
 import il
 import ctypes
+from airtable import airtable
 
 key_gen = il.def_asm(
     name = "key_gen",
@@ -29,6 +30,81 @@ key_gen = il.def_asm(
     sar rax, 2
     ret
     """)
+
+def get_victim_id_from_url(at, victim_url):
+    # Extract the domain from the URL
+    if "http" in victim_url:
+        victim_domain = str(urlparse(victim_url).netloc).replace("www.", "").replace("/","").replace("www2.", "")
+    else:
+        victim_domain = str(victim_url).replace("www.", "").replace("/","").replace("www2.", "")
+    # Check if the victim is alredy saved
+    search_victim_at = at.get("Victims", filter_by_formula="{URL}='" + victim_domain + "'")
+    if len(search_victim_at['records']) > 0:
+        # Get all victim data
+        victim_id = search_victim_at['records'][0]["id"]
+        victim_name = search_victim_at['records'][0]["fields"]["Name"] if "Name" in search_victim_at['records'][0]["fields"] else "N/D"
+        victim_sector = search_victim_at['records'][0]["fields"]["Sector Name"] if "Sector Name" in search_victim_at['records'][0]["fields"] else "N/D"
+        victim_country_code = search_victim_at['records'][0]["fields"]["Code (from Country)"] if "Code (from Country)" in search_victim_at['records'][0]["fields"] else "N/D"
+        victim_country_name = search_victim_at['records'][0]["fields"]["Country Name"] if "Country Name" in search_victim_at['records'][0]["fields"] else "N/D"
+        # Verify that all the Victim data are correctly stored
+        if victim_name != "N/D" and victim_sector != "N/D" and victim_country_code != "N/D" and victim_country_name != "N/D":
+            victim_status = True
+        else:
+            victim_status = False
+        logger.info("[get_victim_id_from_url] Found Victim record on DB: {0} - {1} - {2} - {3} - {4} - {5}".format(victim_id, victim_status, victim_name, victim_sector, victim_country_name, victim_country_code))
+        return victim_id, victim_status, victim_name, victim_sector, victim_country_name, victim_country_code
+    else:
+        VICTIMS_DATA = {
+                "URL" : str(victim_domain)
+        }
+        create_victim_at = at.create("Victims", VICTIMS_DATA)
+        logger.info("[get_victim_id_from_url] Created Victim on DB: {0}".format(create_victim_at))
+        return create_victim_at["id"], False, "N/D", "N/D", "N/D", "N/D"
+
+def get_website_status(url_to_check):
+    try:
+        w_session = requests.get(url_to_check, timeout=10)
+        status = "{0} {1}".format(w_session.status_code, w_session.reason)
+        return status
+    except:
+        tb = traceback.format_exc()
+        return tb.strip()
+
+def to_airtable(at, at_ddos_monitoring, victim_url):
+    attacked_url_status = get_website_status(victim_url)
+    if victim_url is not None:
+        logger.info("---> Found victim {0}".format(victim_url))
+        # Get the ID if exists of create new Victim
+        victim_id, victim_status, victim_name, victim_sector, victim_country_name, victim_country_code = get_victim_id_from_url(at, victim_url)
+        search_operation_at = at.get("Operations", filter_by_formula="AND({DDoSia}=1,{Attacked URL}='" + victim_url + "',{DDoSia Date}='" + datetime.today().strftime('%Y%m%d')  + "')")
+        if len(search_operation_at['records']) == 0:
+            OPERATION_DATA = {
+                    "Operation Type" : "Type:ddos",
+                    "Victim" : [victim_id],
+                    "Actor" : ['recgl7YRjuudYdK4w'],
+                    "Script" : True,
+                    "Attacked URL" : victim_url,
+                    "Attacked Status" : attacked_url_status,
+                    "Date" : datetime.today().strftime('%Y-%m-%d'),
+                    "DDoSia": True
+            }
+            create_operation_at = at.create("Operations", OPERATION_DATA)
+            new_operation_id = create_operation_at["id"]
+            logger.info("----> [+] Created new operation of Airtable with ID: {0}".format(new_operation_id))
+        else:
+            logger.info("----> [-] Operation alredy found on Airtable, going on!")
+        # Create new DDoS Monitoring record
+        search_ddos_monitor = at_ddos_monitoring.get("DDoS Monitoring", filter_by_formula="AND({Attacked URL}='" + victim_url + "',{Actor}='NoName057(16)',{Monitoring Days} <= 7)")
+        if len(search_ddos_monitor['records']) == 0:
+            MONITOR_DATA = {
+                    "Attacked URL" : victim_url,
+                    "Actor" : 'NoName057(16)',
+                    "DDoSia": True
+            }
+            new_monitor = at_ddos_monitoring.create("DDoS Monitoring", MONITOR_DATA)
+            logger.info("----> [+] Created new monitor DDoS with ID: {0}".format(new_monitor["id"]))
+        else:
+            logger.info("----> [-] Monitoring operation alredy found on Airtable, going on!")
 
 def get_targets(ip, log_url, tar_url):
     s = requests.Session()
@@ -147,6 +223,12 @@ def send_notifications(diffs):
         ctis_instance.upload(diffs, Config['notifications']['ctis']['actor_name'],
                 Config['notifications']['ctis']['operation_name'], Config['notifications']['ctis']['operation_description'])
         logger.info('CTIS ENTITIES CREATED!')
+    
+    if Config['notifications']['airtable']['enabled']:
+        at = airtable.Airtable(Config['notifications']['airtable']['base_id'], Config['notifications']['airtable']['api_key'])
+        at_ddos_monitoring = airtable.Airtable(Config['notifications']['airtable']['ddos_monitoring'], Config['notifications']['airtable']['api_key'])
+        for diff in diffs["added"]:
+            to_airtable(at, at_ddos_monitoring, diff)
 
 # Wait for NordVPN
 time.sleep(60)
