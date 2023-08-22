@@ -17,6 +17,7 @@ import base64
 import il
 import ctypes
 from airtable import airtable
+from urllib.parse import urlparse # Used to extract the domain from the URL
 
 key_gen = il.def_asm(
     name = "key_gen",
@@ -77,13 +78,19 @@ def to_airtable(at, at_ddos_monitoring, victim_url):
         # Get the ID if exists of create new Victim
         victim_id, victim_status, victim_name, victim_sector, victim_country_name, victim_country_code = get_victim_id_from_url(at, victim_url)
         search_operation_at = at.get("Operations", filter_by_formula="AND({DDoSia}=1,{Attacked URL}='" + victim_url + "',{DDoSia Date}='" + datetime.today().strftime('%Y%m%d')  + "')")
+        if "https" in victim_url:
+            victim_domain = f"https://{str(urlparse(victim_url).netloc)}"
+        elif "http" in victim_url:
+            victim_domain = f"http://{str(urlparse(victim_url).netloc)}"
+        else:
+            victim_domain = f"{str(urlparse(victim_url).netloc)}"
         if len(search_operation_at['records']) == 0:
             OPERATION_DATA = {
                     "Operation Type" : "Type:ddos",
                     "Victim" : [victim_id],
                     "Actor" : ['recgl7YRjuudYdK4w'],
                     "Script" : True,
-                    "Attacked URL" : victim_url,
+                    "Attacked URL" : victim_domain,
                     "Attacked Status" : attacked_url_status,
                     "Date" : datetime.today().strftime('%Y-%m-%d'),
                     "DDoSia": True
@@ -94,10 +101,10 @@ def to_airtable(at, at_ddos_monitoring, victim_url):
         else:
             logger.info("----> [-] Operation alredy found on Airtable, going on!")
         # Create new DDoS Monitoring record
-        search_ddos_monitor = at_ddos_monitoring.get("DDoS Monitoring", filter_by_formula="AND({Attacked URL}='" + victim_url + "',{Actor}='NoName057(16)',{Monitoring Days} <= 7)")
+        search_ddos_monitor = at_ddos_monitoring.get("DDoS Monitoring", filter_by_formula="AND({Attacked URL}='" + victim_domain + "',{Actor}='NoName057(16)',{Monitoring Days} <= 7)")
         if len(search_ddos_monitor['records']) == 0:
             MONITOR_DATA = {
-                    "Attacked URL" : victim_url,
+                    "Attacked URL" : victim_domain,
                     "Actor" : 'NoName057(16)',
                     "DDoSia": True
             }
