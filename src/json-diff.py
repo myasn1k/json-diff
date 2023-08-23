@@ -211,6 +211,27 @@ def prune_modified(diffs):
     return diffs
 
 def send_notifications(diffs):
+    # Modify target URL to remove duplicate domain
+    for target in diffs['removed']:
+        if "https" in target:
+            target_domain = f"https://{str(urlparse(target).netloc)}"
+        elif "http" in target:
+            target_domain = f"http://{str(urlparse(target).netloc)}"
+        else:
+            target_domain = f"{str(urlparse(target).netloc)}"
+        diffs['removed'].remove(target)
+        diffs['removed'].add(target_domain)
+
+    for target in diffs['added']:
+        if "https" in target:
+            target_domain = f"https://{str(urlparse(target).netloc)}"
+        elif "http" in target:
+            target_domain = f"http://{str(urlparse(target).netloc)}"
+        else:
+            target_domain = f"{str(urlparse(target).netloc)}"
+        diffs['added'].remove(target)
+        diffs['added'].add(target_domain)
+
     if Config['notifications']['slack']['enabled']:
         if SlackNotification.send_notification(Config['notifications']['slack']['url'], diffs, Config['target_info']['url']):
             logger.info('SLACK NOTIFICATION SENT!')
